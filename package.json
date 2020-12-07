@@ -1,10 +1,10 @@
 {
-  "name": "express-validate-request",
+  "name": "@wunderland/express-validate-request",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": "git@github.com:wunderlanddev/express-validate-request.git",
-  "author": "Giridharan GM <giri@wunderland.dev>",
+  "author": "Wunderland Studios <admin@wunderland.dev>",
   "license": "MIT",
   "devDependencies": {
     "@types/express": "^4.17.9",
