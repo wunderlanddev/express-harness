@@ -1,35 +1,61 @@
-import { RequestHandler } from "express";
+import { Request, RequestHandler } from "express";
 import { unlinkSync } from "fs";
+import {
+  ErrorPayload,
+  formatErrorPayload as defaultErrorFormatter,
+} from "./formatErrorPayload";
 
-type ValidatorFunction = (
-  body: { [key: string]: any },
-  query: { [key: string]: any }
+type ValidatorFunction<TParams, TBody, TQuery> = (
+  request: Request<TParams, any, TBody, TQuery>
 ) => string | undefined;
 
-export type ValidateRequestSchema = {
+export type ValidateRequestSchema<TParams = any, TBody = any, TQuery = any> = {
   body?: {
-    [key: string]: {
+    [key in keyof TBody]: {
       required: boolean;
-      validator?: ValidatorFunction;
+      validator?: ValidatorFunction<TParams, TBody, TQuery>;
+      requiredErrorText?: string;
     };
   };
   query?: {
-    [key: string]: {
+    [key in keyof TQuery]: {
       required: boolean;
-      validator?: ValidatorFunction;
+      validator?: ValidatorFunction<TParams, TBody, TQuery>;
+      requiredErrorText?: string;
     };
   };
   files?: {
     [key: string]: {
       required: boolean;
+      requiredErrorText?: string;
+    };
+  };
+  params?: {
+    [key in keyof TParams]: {
+      required: boolean;
+      validator?: ValidatorFunction<TParams, TBody, TQuery>;
     };
   };
 };
 
-export const validateRequest = (
-  schema: ValidateRequestSchema
-): RequestHandler => (request, response, next) => {
-  const { query, body, files } = schema;
+type ValidateRequestOptions = {
+  errorCode: number;
+  formatErrorPayload: (fields: {
+    [key: string]: any;
+  }) => ErrorPayload | { [key: string]: any };
+  cleanupMulter: boolean;
+};
+
+export const validateRequest = <TParams = any, TBody = any, TQuery = any>(
+  schema: ValidateRequestSchema<TParams, TBody, TQuery>,
+  options?: ValidateRequestOptions
+): RequestHandler<TParams, any, TBody, TQuery> => (request, response, next) => {
+  const { query, body, files, params } = schema;
+  const {
+    formatErrorPayload = defaultErrorFormatter,
+    errorCode = 400,
+    cleanupMulter = true,
+  } = options || {};
 
   const cleanupFiles = () => {
     if (files && request.files) {
@@ -49,7 +75,7 @@ export const validateRequest = (
   }
 
   if (query) {
-    const requiredFields = Object.keys(query).filter(
+    const requiredFields = (Object.keys(query) as Array<keyof TQuery>).filter(
       (field) => query[field].required
     );
     const missingFields = requiredFields.filter(
@@ -58,34 +84,45 @@ export const validateRequest = (
 
     if (missingFields.length) {
       cleanupFiles();
-      return response.status(400).json({
-        error: "Required fields cannot be empty",
-        fields: missingFields.join(","),
-      });
+
+      const errorFields = missingFields.reduce(
+        (acl, curr) => ({
+          ...acl,
+          [curr]: query[curr].requiredErrorText || `${curr} is required`,
+        }),
+        {}
+      );
+
+      return response.status(errorCode).json(formatErrorPayload(errorFields));
     }
 
-    const validationResults = Object.keys(query)
-      .map((field) => {
-        const { validator } = query[field];
-        if (validator) {
-          if (validator(request.body, request.query)) {
-            return { [field]: validator(request.body, request.query) };
-          }
-          return undefined;
-        }
-        return undefined;
-      })
-      .filter((a) => a);
-    if (validationResults.length) {
-      return response.status(400).json({
-        error: "Validation failed for form fields",
-        fields: validationResults,
-      });
+    const fieldsWithValidators = (Object.keys(
+      query
+    ) as (keyof TQuery)[]).filter((field) => query[field].validator);
+
+    const validationResults = fieldsWithValidators.reduce((acl, curr) => {
+      const { validator } = query[curr];
+      if (!validator) {
+        return acl;
+      }
+      const isValid = validator(request);
+
+      if (!isValid) {
+        return acl;
+      }
+
+      return { ...acl, [curr]: isValid };
+    }, {});
+
+    if (Object.keys(validationResults).length) {
+      return response
+        .status(400)
+        .json(defaultErrorFormatter(validationResults));
     }
   }
 
   if (body) {
-    const requiredFields = Object.keys(body).filter(
+    const requiredFields = (Object.keys(body) as (keyof TBody)[]).filter(
       (field) => body[field].required
     );
 
@@ -101,12 +138,12 @@ export const validateRequest = (
       });
     }
 
-    const validationResults = Object.keys(body)
+    const validationResults = (Object.keys(body) as (keyof TBody)[])
       .map((field) => {
         const { validator } = body[field];
         if (validator) {
-          if (validator(request.body, request.query)) {
-            return { [field]: validator(request.body, request.query) };
+          if (validator(request)) {
+            return { [field]: validator(request) };
           }
           return undefined;
         }
@@ -138,6 +175,35 @@ export const validateRequest = (
       return response.status(400).json({
         error: "Required fields cannot be empty",
         fields: missingFields.join(","),
+      });
+    }
+  }
+
+  if (params) {
+    const requiredFields = (Object.keys(params) as (keyof TParams)[]).filter(
+      (field) => params[field].required
+    );
+
+    const missingFields = requiredFields.filter(
+      (field) => !request.params[field]
+    );
+
+    const validationResults = (Object.keys(params) as (keyof TParams)[])
+      .map((field) => {
+        const { validator } = params[field];
+        if (validator) {
+          if (validator(request)) {
+            return { [field]: validator(request) };
+          }
+          return undefined;
+        }
+        return undefined;
+      })
+      .filter((a) => a);
+    if (validationResults.length) {
+      return response.status(400).json({
+        error: "Validation failed for the following fields",
+        fields: validationResults,
       });
     }
   }
