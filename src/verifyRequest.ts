@@ -63,7 +63,7 @@ export const verifyRequest = <
     return { ...acl, [curr]: isValid };
   }, {});
 
-  return { ...requiredFieldsResult, ...customValidationResults } as {
+  return { ...customValidationResults, ...requiredFieldsResult } as {
     [key in keyof TResult]: string;
   };
 };
