@@ -83,7 +83,9 @@ export const validateRequest = <TParams = any, TBody = any, TQuery = any>(
     );
 
     if (missingFields.length) {
-      cleanupFiles();
+      if (cleanupMulter) {
+        cleanupFiles();
+      }
 
       const errorFields = missingFields.reduce(
         (acl, curr) => ({
@@ -131,7 +133,9 @@ export const validateRequest = <TParams = any, TBody = any, TQuery = any>(
     );
 
     if (missingFields.length) {
-      cleanupFiles();
+      if (cleanupMulter) {
+        cleanupFiles();
+      }
       return response.status(400).json({
         error: "Required fields cannot be empty",
         fields: missingFields.join(","),
@@ -171,7 +175,9 @@ export const validateRequest = <TParams = any, TBody = any, TQuery = any>(
     );
 
     if (missingFields.length) {
-      cleanupFiles();
+      if (cleanupMulter) {
+        cleanupFiles();
+      }
       return response.status(400).json({
         error: "Required fields cannot be empty",
         fields: missingFields.join(","),
