@@ -58,7 +58,6 @@ export const verifyRequest = <
       return acl;
     }
     const isValid = validator(request);
-    console.log("asd", isValid);
 
     if (!isValid) {
       return acl;
@@ -67,8 +66,6 @@ export const verifyRequest = <
     return { ...acl, [curr]: isValid };
   }, {});
 
-  console.log({ customValidationResults, requiredFieldsResult });
-  console.log(isEmpty(customValidationResults), isEmpty(requiredFieldsResult));
   if (isEmpty(customValidationResults) && isEmpty(requiredFieldsResult)) {
     return null;
   }

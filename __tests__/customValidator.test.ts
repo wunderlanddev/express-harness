@@ -10,7 +10,6 @@ describe("Custom Validators Test", () => {
     request: Request<any, any, any, any>
   ): string | undefined => {
     const payload = request[whereToLook][field];
-    console.log(payload);
     if (!Number.isInteger(parseInt(payload))) {
       return `${field} is not a number`;
     }
