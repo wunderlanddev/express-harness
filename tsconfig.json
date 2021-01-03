@@ -1,5 +1,5 @@
 {
-  "exclude": ["__tests__"],
+  "exclude": ["__tests__", "dist"],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
 
