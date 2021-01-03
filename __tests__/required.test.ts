@@ -94,6 +94,30 @@ describe("Basic Required Fields Test", () => {
     expect(nextFunction).toBeCalled();
   });
 
+  // File
+  it("it should not call the next() middleware [file]", () => {
+    const mw = validateRequest({ files: { iconImage: { required: true } } });
+    mw({ file: {} } as any, mockResponse as Response, nextFunction);
+    expect(mockResponse.json).toBeCalledWith({
+      error: "Validation for the following fields are failed",
+      fields: {
+        files: {
+          iconImage: "iconImage is required",
+        },
+      },
+    });
+  });
+
+  it("it should call the next() middleware [files]", () => {
+    const mw = validateRequest({ files: { iconImage: { required: true } } });
+    mw(
+      { file: { iconImage: [{ path: "" }] } } as any,
+      mockResponse as any,
+      nextFunction
+    );
+    expect(nextFunction).toBeCalled();
+  });
+
   // Params
   it("it should not call the next() middleware [params]", () => {
     const mw = validateRequest({ params: { name: { required: true } } });
