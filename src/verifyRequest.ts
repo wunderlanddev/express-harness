@@ -2,7 +2,7 @@ import { Request } from "express";
 import { ValidateRequestSchema, ValidationOptions } from "./types";
 
 const isEmpty = (obj: { [key: string]: any }): boolean => {
-  for (let key in obj) {
+  for (const key in obj) {
     return false;
   }
   return true;

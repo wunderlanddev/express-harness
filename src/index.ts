@@ -14,6 +14,11 @@ export const validateRequest = <TParams = any, TBody = any, TQuery = any>(
     cleanupMulter = true,
   } = options || {};
 
+  if (!Object.keys(schema).length) {
+    return next();
+  }
+
+  const { query, body, files, params } = schema;
   const cleanupFiles = () => {
     if (files && (request.files || request.file)) {
       Object.keys({ ...request.files, ...request.file }).forEach((file) => {
@@ -30,11 +35,6 @@ export const validateRequest = <TParams = any, TBody = any, TQuery = any>(
   };
 
   // No rules provided
-  if (!Object.keys(schema).length) {
-    return next();
-  }
-
-  const { query, body, files, params } = schema;
 
   const queryErrors = verifyRequest<TQuery, TBody, TParams, TQuery>(
     query,
