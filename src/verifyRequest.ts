@@ -22,14 +22,6 @@ export const verifyRequest = <
     (field) => schema[field].required
   );
 
-  //   const payload = request[whereToLook];
-
-  if (whereToLook === "files") {
-    return {} as {
-      [key in keyof TResult]: string;
-    };
-  }
-
   const payload = request[whereToLook] as { [key: string]: any };
 
   const missingFields = requiredFields.filter(
