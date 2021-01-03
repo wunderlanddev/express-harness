@@ -1,6 +1,13 @@
 import { Request } from "express";
 import { ValidateRequestSchema, ValidationOptions } from "./types";
 
+const isEmpty = (obj: { [key: string]: any }): boolean => {
+  for (let key in obj) {
+    return false;
+  }
+  return true;
+};
+
 export const verifyRequest = <
   TQuery = { [key: string]: any },
   TBody = { [key: string]: any },
@@ -32,42 +39,37 @@ export const verifyRequest = <
     (field) => !payload[String(field)]
   );
 
-  let requiredFieldsResult: null | { [key: string]: string } = null;
-
-  if (missingFields.length) {
-    requiredFieldsResult = missingFields.reduce(
-      (acl, curr) => ({
-        ...acl,
-        [curr]: `${curr} is required`,
-      }),
-      {}
-    );
-  }
+  const requiredFieldsResult = missingFields.reduce(
+    (acl, curr) => ({
+      ...acl,
+      [curr]: `${curr} is required`,
+    }),
+    {}
+  );
 
   // Execute Custom Validators
   const fieldsWithValidators = Object.keys(schema).filter(
     (field) => schema[field].validator
   );
 
-  let customValidationResults: null | { [key: string]: string } = null;
+  const customValidationResults = fieldsWithValidators.reduce((acl, curr) => {
+    const { validator } = schema[curr];
+    if (!validator) {
+      return acl;
+    }
+    const isValid = validator(request);
+    console.log("asd", isValid);
 
-  if (fieldsWithValidators.length) {
-    customValidationResults = fieldsWithValidators.reduce((acl, curr) => {
-      const { validator } = schema[curr];
-      if (!validator) {
-        return acl;
-      }
-      const isValid = validator(request);
+    if (!isValid) {
+      return acl;
+    }
 
-      if (!isValid) {
-        return acl;
-      }
+    return { ...acl, [curr]: isValid };
+  }, {});
 
-      return { ...acl, [curr]: isValid };
-    }, {});
-  }
-
-  if (!customValidationResults && !requiredFieldsResult) {
+  console.log({ customValidationResults, requiredFieldsResult });
+  console.log(isEmpty(customValidationResults), isEmpty(requiredFieldsResult));
+  if (isEmpty(customValidationResults) && isEmpty(requiredFieldsResult)) {
     return null;
   }
 
