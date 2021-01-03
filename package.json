@@ -1,9 +1,9 @@
 {
-  "name": "@wunderland/express-validate-request",
+  "name": "@wunderland/express-harness",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "repository": "git@github.com:wunderlanddev/express-validate-request.git",
+  "repository": "git@github.com:wunderlanddev/express-harness.git",
   "author": "Wunderland Studios <admin@wunderland.dev>",
   "license": "MIT",
   "devDependencies": {

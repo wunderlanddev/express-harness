@@ -1,4 +1,4 @@
-# express-validate-request
+# express-harness
 
 A fully typed, light-weight, unopinionated and no-dependencies Express.JS middleware that helps with the validation of requests.
 
@@ -16,13 +16,13 @@ In general, as a developer,
 # Installation
 
 ```bash
-npm i @wunderland/express-validate-request
+npm i @wunderland/express-harness
 ```
 
 or
 
 ```bash
-yarn add @wunderland/express-validate-request
+yarn add @wunderland/express-harness
 ```
 
 # Examples
@@ -30,7 +30,7 @@ yarn add @wunderland/express-validate-request
 ## Basic Example
 
 ```javascript
-import { validateRequest } from "@wunderland/express-validate-request";
+import { validateRequest } from "@wunderland/express-harness";
 import express from "express";
 
 const app = express();
@@ -60,7 +60,7 @@ app.post(
 ## Custom Validation
 
 ```javascript
-import { validateRequest } from "@wunderland/express-validate-request";
+import { validateRequest } from "@wunderland/express-harness";
 import express from "express";
 
 const app = express();
@@ -108,7 +108,7 @@ app.post(
 
 # API
 
-`express-validate-request` exports a named function:
+`express-harness` exports a named function:
 
 ## `validateRequest(schema, [options])`
 
