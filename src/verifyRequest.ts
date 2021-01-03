@@ -36,32 +36,44 @@ export const verifyRequest = <
     (field) => !payload[String(field)]
   );
 
-  const requiredFieldsResult = missingFields.reduce(
-    (acl, curr) => ({
-      ...acl,
-      [curr]: `${curr} is required`,
-    }),
-    {}
-  );
+  let requiredFieldsResult: null | { [key: string]: string } = null;
+
+  if (missingFields.length) {
+    requiredFieldsResult = missingFields.reduce(
+      (acl, curr) => ({
+        ...acl,
+        [curr]: `${curr} is required`,
+      }),
+      {}
+    );
+  }
 
   // Execute Custom Validators
   const fieldsWithValidators = Object.keys(schema).filter(
     (field) => schema[field].validator
   );
 
-  const customValidationResults = fieldsWithValidators.reduce((acl, curr) => {
-    const { validator } = schema[curr];
-    if (!validator) {
-      return acl;
-    }
-    const isValid = validator(request);
+  let customValidationResults: null | { [key: string]: string } = null;
 
-    if (!isValid) {
-      return acl;
-    }
+  if (fieldsWithValidators.length) {
+    customValidationResults = fieldsWithValidators.reduce((acl, curr) => {
+      const { validator } = schema[curr];
+      if (!validator) {
+        return acl;
+      }
+      const isValid = validator(request);
 
-    return { ...acl, [curr]: isValid };
-  }, {});
+      if (!isValid) {
+        return acl;
+      }
+
+      return { ...acl, [curr]: isValid };
+    }, {});
+  }
+
+  if (!customValidationResults && !requiredFieldsResult) {
+    return null;
+  }
 
   return { ...customValidationResults, ...requiredFieldsResult } as {
     [key in keyof TResult]: string;
