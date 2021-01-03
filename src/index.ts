@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { unlinkSync } from "fs";
+import { existsSync, unlinkSync } from "fs";
 import { formatErrorPayload as defaultErrorFormatter } from "./formatErrorPayload";
 import { ValidateRequestOptions, ValidateRequestSchema } from "./types";
 import { verifyRequest } from "./verifyRequest";
@@ -15,13 +15,15 @@ export const validateRequest = <TParams = any, TBody = any, TQuery = any>(
   } = options || {};
 
   const cleanupFiles = () => {
-    if (files && request.files) {
-      Object.keys(request.files).forEach((file) => {
+    if (files && (request.files || request.file)) {
+      Object.keys({ ...request.files, ...request.file }).forEach((file) => {
         const fileList = (request.files as {
           [key: string]: Express.Multer.File[];
         })[file];
         fileList.forEach((item) => {
-          unlinkSync(item.path);
+          if (existsSync(item.path)) {
+            unlinkSync(item.path);
+          }
         });
       });
     }

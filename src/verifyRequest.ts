@@ -22,7 +22,11 @@ export const verifyRequest = <
     (field) => schema[field].required
   );
 
-  const payload = request[whereToLook] as { [key: string]: any };
+  let payload = request[whereToLook] as { [key: string]: any };
+
+  if (whereToLook === "files") {
+    payload = { ...payload, ...request.file };
+  }
 
   const missingFields = requiredFields.filter(
     (field) => !payload[String(field)]
